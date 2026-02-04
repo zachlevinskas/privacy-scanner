@@ -4,34 +4,49 @@ from models import Quote
 from config import DB_PATH
 import logging
 
-
-#Logging
-logging.basicConfig(level=logging.INFO)
+# Logging setup
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(levelname)s: %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)  # Opens/creates the database file
-    cursor = conn.cursor()            # Creates a cursor object to execute SQL
-    
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS quotes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    text TEXT NOT NULL,
-    author TEXT NOT NULL,
-    tags TEXT,
-    scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    
-    conn.commit()  # Save changes
-    conn.close()   # Close connection
-
-
-def insert_quote(quote: Quote):
+    """
+    Initializes the SQLite database and creates the quotes table if it doesn't exist.
+    Called on application startup to ensure database schema is ready.
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    # Check if quote already exists
+    # Create quotes table with schema for storing scraped data
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS quotes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            text TEXT NOT NULL,
+            author TEXT NOT NULL,
+            tags TEXT,
+            scraped_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    conn.commit()
+    conn.close()
+
+
+def insert_quote(quote: Quote):
+    """
+    Inserts a quote into the database with duplicate detection.
+    Duplicates are identified by matching both text and author exactly.
+    
+    Args:
+        quote (Quote): Pydantic model containing quote data
+    """
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    
+    # Check if quote already exists to prevent duplicates
+    # We consider a quote duplicate if both text and author match exactly
     cursor.execute(
         "SELECT 1 FROM quotes WHERE text = ? AND author = ?",
         (quote.text, quote.author)
@@ -43,10 +58,10 @@ def insert_quote(quote: Quote):
         conn.close()
         return
     
-    # Convert tags list to JSON string
+    # Convert tags list to JSON string for storage (SQLite doesn't support array types)
     tags_json = json.dumps(quote.tags)
     
-    #Insert to DB
+    # Insert new quote into database
     cursor.execute(
         "INSERT INTO quotes (text, author, tags) VALUES (?, ?, ?)",
         (quote.text, quote.author, tags_json)
@@ -57,15 +72,21 @@ def insert_quote(quote: Quote):
 
 
 def get_all_quotes():
+    """
+    Retrieves all quotes from the database and converts them to Quote objects.
+    
+    Returns:
+        List[Quote]: List of all quotes with tags converted back from JSON
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
     cursor.execute("SELECT text, author, tags FROM quotes")
-    rows = cursor.fetchall()  # Returns list of tuples
+    rows = cursor.fetchall()
     
-    quotes = []  # Empty list to store Quote objects
+    quotes = []
     for row in rows:
-        # row is a tuple: (text, author, tags_json_string)
+        # Convert database row to Quote object, deserializing JSON tags
         quote = Quote(
             text=row[0],
             author=row[1],

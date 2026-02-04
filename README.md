@@ -1,10 +1,10 @@
 # Privacy Scanner
 
-A web scraping application that extracts quotes from quotes.toscrape.com, stores them in a SQLite database, and exposes the data via a FastAPI REST API.
+This is a simple web scraping application that extracts quotes from quotes.toscrape.com, stores them in a SQLite database, and exposes the data via a FastAPI REST API.
 
 ## Why I Built This
 
-This project was built to demonstrate proficiency in Python, web scraping, FastAPI, SQL, and production-ready coding practices as part of my application for the Junior Software Engineer position at 360 Privacy.
+This project was built to demonstrate proficiency in Python, web scraping, FastAPI, SQL, and production-ready coding practices as part of building hands-on experience with the technologies used by privacy and automation engineering teams.
 
 ## Technologies Used
 
@@ -39,7 +39,7 @@ privacy-scanner/
 
 1. **Clone the repository**
 ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/zachlevinskas/privacy-scanner.git
    cd privacy-scanner
 ```
 
@@ -67,6 +67,18 @@ privacy-scanner/
    - Base URL: http://127.0.0.1:8000
 
 ## API Endpoints
+
+### `GET /`
+Health check endpoint for monitoring service status.
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "service": "privacy-scanner",
+  "version": "1.0.0"
+}
+```
 
 ### `POST /scan`
 Triggers the web scraper to fetch quotes from the target site.
@@ -99,14 +111,3 @@ Returns all scraped quotes from the database.
 - SQLite database is suitable for development but would need migration to PostgreSQL for production scale
 - No authentication/authorization implemented
 
-## Future Improvements
-
-- Add pagination support for scraping multiple pages
-- Implement background task processing for long-running scrapes
-- Add filtering and search capabilities to the API
-- Deploy to AWS with proper production database
-- Add monitoring and alerting
-
-## License
-
-MIT
